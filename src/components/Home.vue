@@ -22,6 +22,8 @@
           template: 制订了子菜单的文本和图标
           el-menu-item-group: 菜单项的分组
           el-menu-item: 菜单项
+          router: 布尔类型直接加router,是否开启导航模式,如果开启,比如
+                  我们点击"用户列表"的时候,会跳转到该页面
         -->
         <el-menu
           default-active="1-1"
@@ -29,6 +31,7 @@
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
+          router
         >
           <el-submenu index="1">
             <template slot="title">
@@ -58,7 +61,10 @@
           </el-submenu>
         </el-menu>
       </el-aside>
-      <el-main>Main</el-main>
+      <el-main>
+        <!-- 显示home组件的子路由出口 -->
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
