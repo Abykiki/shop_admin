@@ -13,7 +13,12 @@
         <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
       </el-form-item>
       <el-form-item label="密码" prop="password">
-        <el-input v-model="form.password" type="password" placeholder="请输入密码"></el-input>
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="请输入密码"
+          @keyup.enter.native="login"
+        ></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="login">登录</el-button>
@@ -24,7 +29,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+// import axios from 'axios'
 export default {
   data() {
     return {
@@ -60,35 +65,38 @@ export default {
     // 登录校验
     login() {
       // 让整个表单校验
-      this.$refs.form.validate(valid => {
+      this.$refs.form.validate(async valid => {
         // valid如果为true,就表示通过,否则不通过
         if (valid) {
           // 发送ajax请求,进行登录
-          axios({
+          let res = await this.axios({
             method: 'post',
-            url: 'http://localhost:8888/api/private/v1/login',
+            url: 'login',
             data: this.form
-          }).then(res => {
-            console.log(res.data)
-            if (res.data.meta.status === 200) {
-              this.$message.success('登录成功')
-              // 把后台颁发的token存起来
-              localStorage.setItem('token', res.data.data.token)
-              // 跳转到home组件
-              // 参数:跳转的路径
-              // 类似于location.href
-              this.$router.push('/home')
-              // 把后台颁发的token保存起来
-              // localStorage.setItem('token', res.data.data.token)
-            } else {
-              // 失败的消息 this.$message:弹出一个消息提示
-              this.$message({
-                message: res.data.meta.msg,
-                type: 'error',
-                duration: 1000
-              })
-            }
           })
+          // console.log(res)
+          let {
+            meta: { status, msg },
+            data: { token }
+          } = res
+          if (status === 200) {
+            this.$message.success('登录成功')
+            // 把后台颁发的token存起来
+            localStorage.setItem('token', token)
+            // 跳转到home组件
+            // 参数:跳转的路径
+            // 类似于location.href
+            this.$router.push('/home')
+            // 把后台颁发的token保存起来
+            // localStorage.setItem('token', res.data.data.token)
+          } else {
+            // 失败的消息 this.$message:弹出一个消息提示
+            this.$message({
+              message: msg,
+              type: 'error',
+              duration: 1000
+            })
+          }
         } else {
           return false
         }

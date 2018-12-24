@@ -31,7 +31,12 @@
         <!-- 在自定义列模板中,如何访问到当前列的数据 -->
         <template slot-scope="scope">
           <!-- scope.row.mg_state: 拿到用户状态是false/true -->
-          <el-switch v-model="scope.row.mg_state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+          <el-switch
+            @change="changeState(scope.row)"
+            v-model="scope.row.mg_state"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+          ></el-switch>
         </template>
       </el-table-column>
       <el-table-column label="操作">
@@ -73,7 +78,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+// import axios from 'axios'
 export default {
   data() {
     return {
@@ -87,32 +92,35 @@ export default {
     }
   },
   methods: {
-    getUserList() {
+    async getUserList() {
       // axios如果是get/delete请求,参数要么是直接拼在地址栏,要么放到params中
       // 如果是post/patch请求,参数放到data中
       // 除了login请求,其他所有的接口都必须携带token,要求设置给请求头:Authorization
-      axios({
+      let res = await this.axios({
         method: 'get',
-        url: 'http://localhost:8888/api/private/v1/users',
+        url: 'users',
         //   请求参数
         params: {
           query: this.query,
           pagenum: this.currentPage,
           pagesize: this.pageSize
-        },
-        headers: {
-          Authorization: localStorage.getItem('token')
         }
-      }).then(res => {
-        //   console.log(res.data)
-        // 打印到"无效token",是因为整个API认证统一使用token认证,
-        // 需要授权的API,必须在请求头中使用Authorization字段提供token令牌
-        if (res.data.meta.status === 200) {
-          this.userList = res.data.data.users
-          this.total = res.data.data.total
-          console.log(this.userList)
-        }
+        // headers: {
+        //   Authorization: localStorage.getItem('token')
+        // }
       })
+      //   console.log(res.data)
+      // 打印到"无效token",是因为整个API认证统一使用token认证,
+      // 需要授权的API,必须在请求头中使用Authorization字段提供token令牌
+      let {
+        meta: { status },
+        data: { users, total }
+      } = res
+      if (status === 200) {
+        this.userList = users
+        this.total = total
+        console.log(this.userList)
+      }
     },
     handleSizeChange(val) {
       //   console.log(`每页 ${val} 条`)
@@ -129,35 +137,52 @@ export default {
       this.currentPage = 1
       this.getUserList()
     },
-    delUser(id) {
-      console.log(id)
-      this.$confirm('确定要删除嘛?', '温馨提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+    async delUser(id) {
+      try {
+        // console.log(id)
+        await this.$confirm('确定要删除嘛?', '温馨提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        //   发送ajax请求,删除数据
+        let res = await this.axios({
+          method: 'delete',
+          url: `users/${id}`
+          // headers: {
+          //   Authorization: localStorage.getItem('token')
+          // }
+        })
+        if (res.meta.status === 200) {
+          // 如果删除成功,我们会发现当前的数据<=1,应该current-1,再渲染上一页
+          if (this.userList.length <= 1 && this.currentPage > 1) {
+            this.currentPage--
+          }
+          this.getUserList()
+          this.$message.success('删除成功')
+        }
+      } catch (e) {
+        this.$message.info('取消删除')
+      }
+    },
+    // 修改用户状态
+    async changeState({ id, mg_state: mgState }) {
+      // console.log(user)
+      // this指的是当前实例,在main.js中已经创建了当前实例
+      // 这样不用在上面导入 import axios from axios
+      let res = await this.axios({
+        method: 'put',
+        url: `users/${id}/state/${mgState}`
+        // headers: {
+        //   Authorization: localStorage.getItem('token')
+        // }
       })
-        .then(() => {
-          //   发送ajax请求,删除数据
-          axios({
-            method: 'delete',
-            url: `http://localhost:8888/api/private/v1/users/${id}`,
-            headers: {
-              Authorization: localStorage.getItem('token')
-            }
-          }).then(res => {
-            if (res.data.meta.status === 200) {
-              // 如果删除成功,我们会发现当前的数据<=1,应该current-1,再渲染上一页
-              if (this.userList.length <= 1 && this.currentPage > 1) {
-                this.currentPage--
-              }
-              this.getUserList()
-              this.$message.success('删除成功')
-            }
-          })
-        })
-        .catch(() => {
-          this.$message.info('取消删除')
-        })
+      // console.log(res.data)
+      if (res.meta.status === 200) {
+        this.$message.success('修改状态成功')
+      } else {
+        this.$message.error('修改状态失败')
+      }
     }
   },
   created() {
@@ -167,10 +192,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.el-breadcrumb {
-  height: 50px;
-  line-height: 50px;
-}
 .el-input {
   width: 300px;
   margin-bottom: 5px;

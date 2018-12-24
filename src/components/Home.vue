@@ -50,11 +50,11 @@
               <span>权限管理</span>
             </template>
             <!-- 菜单项 -->
-            <el-menu-item index="2-1">
+            <el-menu-item index="/roles">
               <i class="el-icon-menu"></i>
               <span slot="title">角色列表</span>
             </el-menu-item>
-            <el-menu-item index="2-2">
+            <el-menu-item index="/rights">
               <i class="el-icon-menu"></i>
               <span slot="title">权限列表</span>
             </el-menu-item>
@@ -76,30 +76,23 @@
 // 3.点击确定,删除token,跳转到登录组件
 export default {
   methods: {
-    logout() {
-      this.$confirm('你确定要退出系统吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(() => {
-          this.$message({
-            type: 'success',
-            message: '退出成功!'
-          })
-          // 删除token
-          localStorage.removeItem('token')
-          this.$router.push('/login')
+    async logout() {
+      try {
+        await this.$confirm('你确定要退出系统吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
-        .catch(() => {
-          this.$message.info('取消退出')
+        this.$message({
+          type: 'success',
+          message: '退出成功!'
         })
-    },
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath)
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath)
+        // 删除token
+        localStorage.removeItem('token')
+        this.$router.push('/login')
+      } catch (e) {
+        this.$message.info('取消退出')
+      }
     }
   }
 }
