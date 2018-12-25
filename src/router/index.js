@@ -4,11 +4,13 @@ import Login from 'components/Login'
 // 导入home组件
 import Home from 'components/Home'
 // 导入users组件
-import Users from 'components/Users'
+import Users from 'components/users/Users'
 // 导入Rights组件
-import Rights from 'components/Rights'
+import Rights from 'components/rights/Rights'
 // 导入Roles组件
-import Roles from 'components/Roles'
+import Roles from 'components/rights/Roles'
+// 导入categories组件
+import Category from 'components/product/Category'
 
 Vue.use(Router)
 /*
@@ -43,6 +45,10 @@ const router = new Router({
         {
           path: '/roles',
           component: Roles
+        },
+        {
+          path: '/categories',
+          component: Category
         }
       ]
     }

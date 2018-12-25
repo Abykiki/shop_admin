@@ -49,7 +49,13 @@
             plain
             @click="delUser(scope.row.id)"
           ></el-button>
-          <el-button size="mini" type="success" icon="el-icon-check" plain>分配角色</el-button>
+          <el-button
+            @click="showAssignDialog(scope.row)"
+            size="mini"
+            type="success"
+            icon="el-icon-check"
+            plain
+          >分配角色</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -183,7 +189,9 @@ export default {
       } else {
         this.$message.error('修改状态失败')
       }
-    }
+    },
+    // 分配角色
+    showAssignDialog(user) {}
   },
   created() {
     this.getUserList()

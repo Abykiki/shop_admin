@@ -13,6 +13,12 @@
       <el-table-column label="权限名称" prop="authName"></el-table-column>
       <el-table-column label="路径" prop="path"></el-table-column>
       <el-table-column label="层级" prop="level">
+        <!-- <template slot-scope="scope">
+          <span v-if="+scope.row.level === 0">一级</span>
+          <span v-else-if="+scope.row.level === 1">二级</span>
+          <span v-else>三级</span>
+        </template>-->
+        <!-- 解构 -->
         <template slot-scope="{row:{level}}">
           <span v-if="+level === 0">一级</span>
           <span v-else-if="+level === 1">二级</span>
