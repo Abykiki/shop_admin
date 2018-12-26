@@ -10,7 +10,7 @@
     <el-input placeholder="请输入内容" v-model="query" class="input-with-select">
       <el-button slot="append" icon="el-icon-search" @click="search"></el-button>
     </el-input>
-    <el-button type="success" plain>添加用户</el-button>
+    <el-button type="success" plain @click="showAddDialog">添加用户</el-button>
     <!-- 表格组件 -->
     <!--
         el-table: 表格组件
@@ -41,7 +41,13 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button size="mini" type="primary" icon="el-icon-edit" plain></el-button>
+          <el-button
+            size="mini"
+            type="primary"
+            icon="el-icon-edit"
+            @click="showEditDialog(scope.row)"
+            plain
+          ></el-button>
           <el-button
             size="mini"
             type="danger"
@@ -61,7 +67,6 @@
     </el-table>
     <!-- 分页 -->
     <!--
-        分页
       @size-change: 表示每页的条数发生了改变，会触发handleSizeChange
       @current-change: 当前页发生改变
       current-page: 指定当前页面
@@ -80,6 +85,72 @@
       :total="total"
       background
     ></el-pagination>
+    <!-- 添加用户的对话框 -->
+    <el-dialog title="添加用户" :visible.sync="addDialogVisible" width="40%">
+      <!-- 添加表单 -->
+      <el-form ref="addForm" :model="addForm" label-width="80px" :rules="rules" status-icon>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="addForm.username" placeholder="请输入用户名"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="addForm.password" placeholder="请输入密码"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="addForm.email" placeholder="请输入用户邮箱"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="addForm.mobile" placeholder="请输入用户手机"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 修改用户的对话框 -->
+    <el-dialog title="修改用户" :visible.sync="editDialogVisible" width="40%">
+      <!-- 修改表单 -->
+      <el-form ref="editForm" :model="editForm" label-width="80px" :rules="rules" status-icon>
+        <el-form-item label="用户名">
+          <el-tag type="info">{{editForm.username}}</el-tag>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editForm.email" placeholder="请输入用户邮箱"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="editForm.mobile" placeholder="请输入用户手机"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="updateUser">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 分配角色的对话框 -->
+    <el-dialog title="分配角色" :visible.sync="assignDialogVisible" width="40%">
+      <el-form ref="assignForm" :model="assignForm" label-width="80px" :rules="rules" status-icon>
+        <el-form-item label="用户名">
+          <el-tag type="info">{{assignForm.username}}</el-tag>
+        </el-form-item>
+        <el-form-item label="角色列表">
+          <el-select v-model="assignForm.rid" placeholder="请选择">
+            <!--
+              options(roleList): 遍历的是所有角色,角色列表
+            -->
+            <el-option
+              v-for="item in roleList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="assignDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="assignRole">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -94,7 +165,48 @@ export default {
       query: '',
       currentPage: 1,
       pageSize: 2,
-      total: 0
+      total: 0,
+      addDialogVisible: false,
+      addForm: {
+        username: '',
+        password: '',
+        email: '',
+        mobile: ''
+      },
+      rules: {
+        username: [
+          { required: true, message: '用户名不能为空', trigger: 'blur' },
+          { min: 3, max: 9, message: '用户名长度在3-9位', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '密码不能为空', trigger: 'blur' },
+          { min: 6, max: 12, message: '密码长度在6-12位', trigger: 'blur' }
+        ],
+        email: [
+          { type: 'email', message: '请输入一个合法的邮箱', trigger: 'blur' }
+        ],
+        mobile: [
+          {
+            pattern: /^1\d{10}$/,
+            message: '请输入一个合法的手机号',
+            trigger: 'blur'
+          }
+        ]
+      },
+      editDialogVisible: false,
+      editForm: {
+        id: '',
+        username: '',
+        email: '',
+        mobile: ''
+      },
+      assignDialogVisible: false,
+      assignForm: {
+        id: '',
+        username: '',
+        rid: ''
+      },
+      roleList: []
     }
   },
   methods: {
@@ -190,8 +302,126 @@ export default {
         this.$message.error('修改状态失败')
       }
     },
-    // 分配角色
-    showAssignDialog(user) {}
+    // 显示添加的对话框
+    showAddDialog() {
+      this.addDialogVisible = true
+    },
+    addUser() {
+      // 1. 表单校验功能
+      // 2. 发送ajax请求添加数据
+      // 3. 重新渲染  关闭模态框  重置样式
+      this.$refs.addForm.validate(async valid => {
+        if (!valid) return false
+        // 校验成功
+        let res = await this.axios({
+          method: 'post',
+          url: 'users',
+          data: this.addForm
+        })
+        let {
+          meta: { status, msg }
+        } = res
+        if (status === 201) {
+          this.total++
+          this.currentPage = Math.ceil(this.total / this.pageSize)
+          // 重新渲染
+          this.getUserList()
+          // 重置表单样式
+          this.$refs.addForm.resetFields()
+          // 隐藏模态框
+          this.addDialogVisible = false
+          // 提示信息
+          this.$message.success('添加成功了')
+        } else {
+          this.$message.error(msg)
+        }
+      })
+    },
+    // 修改用户的对话框显示
+    showEditDialog(row) {
+      // 显示对话框
+      this.editDialogVisible = true
+      this.editForm.id = row.id
+      this.editForm.username = row.username
+      this.editForm.email = row.email
+      this.editForm.mobile = row.mobile
+    },
+    // 修改用户的操作
+    updateUser() {
+      this.$refs.editForm.validate(async valid => {
+        if (!valid) return false
+        // 发送ajax请求
+        let res = await this.axios({
+          method: 'put',
+          url: `users/${this.editForm.id}`,
+          data: this.editForm
+        })
+        let {
+          meta: { status }
+        } = res
+        if (status === 200) {
+          // 重新渲染
+          this.getUserList()
+          // 隐藏修改对话框
+          this.editDialogVisible = false
+          // 重置修改表单
+          this.$refs.editForm.resetFields()
+          // 提示消息
+          this.$message.success('恭喜你，修改成功了')
+        } else {
+          this.$message.error('服务器异常')
+        }
+      })
+    },
+    // 获取角色id rid
+    async getUserInfo(id) {
+      let res = await this.axios.get(`users/${id}`)
+      // 根据用户的id获取用户信息,其中就能获取到角色id
+      // console.log(res)
+      if (res.meta.status === 200) {
+        let rid = res.data.rid
+        // 新增的用户没有指定角色id,则rid=-1,为了达到更好的效果让-1为空
+        if (rid === -1) {
+          rid = ''
+        }
+        this.assignForm.rid = rid
+      }
+    },
+    async showAssignDialog(user) {
+      // 1.显示分配角色的对话框
+      this.assignDialogVisible = true
+      // 2.回显数据
+      this.assignForm.id = user.id
+      this.assignForm.username = user.username
+      // rid是当前用户的角色id，后台没有直接传rid
+      // 解决方法：发送ajax请求，根据用户id查询角色id
+      this.getUserInfo(user.id)
+      // 3.获取角色列表
+      let res = await this.axios.get('roles')
+      // console.log(res)
+      // res.data就是所有的角色列表
+      if (res.meta.status === 200) {
+        this.roleList = res.data
+        // console.log(this.roleList)
+      }
+    },
+    // 分配角色操作
+    async assignRole() {
+      // 表单校验:如果没有角色id:rid,则表示没有分配角色
+      if (!this.assignForm.rid) {
+        this.$message.error('请选择一个角色')
+        return
+      }
+      let res = await this.axios.put(`users/${this.assignForm.id}/role`, {
+        rid: this.assignForm.rid
+      })
+      if (res.meta.status === 200) {
+        this.$refs.assignForm.resetFields()
+        this.assignDialogVisible = false
+        this.getUserList()
+        this.$message.success('分配角色成功')
+      }
+    }
   },
   created() {
     this.getUserList()
@@ -200,7 +430,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.el-input {
+.input-with-select {
   width: 300px;
   margin-bottom: 5px;
 }

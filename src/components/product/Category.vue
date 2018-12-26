@@ -1,6 +1,6 @@
 <template>
   <div class="categories">
-    <el-button></el-button>
+    <el-button>...</el-button>
   </div>
 </template>
 
