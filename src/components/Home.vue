@@ -26,37 +26,23 @@
                   我们点击"用户列表"的时候,会跳转到该页面
         -->
         <el-menu
-          default-active="1-1"
+          :default-active="$route.path.slice(1)"
           class="el-menu-vertical-demo"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
+          unique-opened
           router
         >
-          <el-submenu index="1">
+          <el-submenu v-for="menu in menuList" :key="menu.id" :index="menu.path">
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span>用户管理</span>
+              <span>{{ menu.authName}}</span>
             </template>
             <!-- 菜单项 -->
-            <el-menu-item index="/users">
+            <el-menu-item :index="item.path" v-for="item in menu.children" :key="item.id">
               <i class="el-icon-menu"></i>
-              <span slot="title">用户列表</span>
-            </el-menu-item>
-          </el-submenu>
-          <el-submenu index="2">
-            <template slot="title">
-              <i class="el-icon-location"></i>
-              <span>权限管理</span>
-            </template>
-            <!-- 菜单项 -->
-            <el-menu-item index="/roles">
-              <i class="el-icon-menu"></i>
-              <span slot="title">角色列表</span>
-            </el-menu-item>
-            <el-menu-item index="/rights">
-              <i class="el-icon-menu"></i>
-              <span slot="title">权限列表</span>
+              <span slot="title">{{ item.authName }}</span>
             </el-menu-item>
           </el-submenu>
         </el-menu>
@@ -75,6 +61,11 @@
 // 2.弹出一个确认框
 // 3.点击确定,删除token,跳转到登录组件
 export default {
+  data() {
+    return {
+      menuList: []
+    }
+  },
   methods: {
     async logout() {
       try {
@@ -93,7 +84,19 @@ export default {
       } catch (e) {
         this.$message.info('取消退出')
       }
+    },
+    // 获取所有菜单数据
+    async getMenuList() {
+      let res = await this.axios.get('menus')
+      if (res.meta.status === 200) {
+        this.menuList = res.data
+        // console.log(this.menuList)
+      }
     }
+  },
+  // 进入页面,获取菜单数据
+  created() {
+    this.getMenuList()
   }
 }
 </script>
